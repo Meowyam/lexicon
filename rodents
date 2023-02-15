@@ -1,4 +1,5 @@
-lin  we_Pron = mkPron "we"
+lin
+  we_Pron = mkPron "we"
   cover_V = mkV "cover"
   loss_N = mkN "loss"
   or_Conj = mkConj "or"
