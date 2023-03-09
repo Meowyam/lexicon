@@ -5,17 +5,13 @@ import itertools
 import functools
 
 x = input()
+file = x + ".md"
 
-txt = ""
-
-with open(x) as f:
+with open(file) as f:
     t = f.read()
     print(t)
-    # start = next(i for i, row in enumerate(t) if "SOURCE TEXT" in row)
-    # l = next(i for i, row in enumerate(t) if "§" in row)
-    # tx = (' '.join(list(itertools.chain.from_iterable(t[start:l]))).replace('//','').replace('SOURCE TEXT','').split())
 
-txt = ' '.join(filter(None, t.replace('//','').replace('/n','').split(',')))
+txt = " ".join(filter(None, t.replace("//", "").replace("/n", "").split(",")))
 
 print(txt)
 
@@ -40,7 +36,8 @@ posDict = {
     "PUNCT": "PUNCT",
     "ADP": "Prep",
     "PROPN": "PN",
-    "SPACE":  ""
+    "SPACE": "",
+    "NUM" : "Num",
 }
 
 
@@ -86,11 +83,10 @@ for i, t in tok:
         print("word :", getBasic(doc[i]))
         words.append(getBasic(doc[i]))
 
-lex = open("sing", "w")
+lex = open(x, "w")
 lex.write("lin")
 lex.write("\n")
 for w in words:
     lex.write("  ")
     lex.write(w)
     lex.write("\n")
-

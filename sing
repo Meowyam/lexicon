@@ -1,5 +1,5 @@
 lin
-  Person_PN = mkPN "Person"
+  person_N = mkN "person"
   who_Pron = mkPron "who"
   walk_V = mkV "walk"
   eat_V = mkV "eat"
