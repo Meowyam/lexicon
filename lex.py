@@ -3,8 +3,10 @@ import csv
 import re
 import itertools
 import functools
+import sys
 
-x = input()
+
+x = sys.argv[1]
 file = x + ".md"
 
 with open(file) as f:
@@ -37,13 +39,17 @@ posDict = {
     "ADP": "Prep",
     "PROPN": "PN",
     "SPACE": "",
-    "NUM" : "Num",
+    "NUM": "Num",
+    "X": "X",
+    "INTJ": "Interj",
+    "SYM": "PUNCT",
 }
 
 
 def getBasic(t):
     lem = t.lemma_
     pos = posDict[t.pos_]
+    print("hey",lem, pos)
     word = lem + "_" + pos + " = " + "mk" + pos + ' "' + lem + '"'
     return word
 
@@ -54,13 +60,26 @@ def getCmpnd(t1, t2):
     word = lem + "_" + pos + " = " + "mk" + pos + ' "' + lem + '"'
     return word
 
+def getHyph(t0, t1, t2):
+    lem = t0.lemma_ + t1.lemma_ + t2.lemma_
+    pos = posDict[t2.pos_]
+    word = lem + "_" + pos + " = " + "mk" + pos + ' "' + lem + '"'
+    return word
 
 tok = enumerate(doc)
 
 for i, t in tok:
     print(t, " :", t.lemma_, t.pos_, t.morph, t.dep_)
     if t.dep_ == "compound":
-        words.append(getCmpnd(doc[i], doc[i + 1]))
+        if doc[i + 1].lemma_ == " ":
+            words.append(getBasic(doc[i]))
+        elif doc[i+1].lemma_ == "-":
+            words.append(getHyph(doc[i], doc[i+1], doc[i+2]))
+        else:
+            words.append(getCmpnd(doc[i], doc[i + 1]))
+        next(tok)
+    elif t.lemma_ == "-" and t.pos_ == "ADJ":
+        words.append(getHyph(doc[i - 1], doc[i], doc[i + 1]))
         next(tok)
     elif t.pos_ == "PART":
         if t.dep_ == "neg" or t.dep_ == "pos":
@@ -69,7 +88,8 @@ for i, t in tok:
             words.append(getBasic(doc[i + 1]))
             next(tok)
         else:
-            print(t.lemma_, t.pos_, t.tag_, t.morph, t.dep_)
+            pass
+            # print(t.lemma_, t.pos_, t.tag_, t.morph, t.dep_)
     elif (
         t.pos_ == "AUX"
         or t.pos_ == "PUNCT"
@@ -77,10 +97,13 @@ for i, t in tok:
         or posDict[t.pos_] == "Conj"
         or t.pos_ == "ADP"
         or t.pos_ == "SPACE"
+        or t.pos_ == "NUM"
+        or t.pos_ == "X"
     ):
         pass
+
     else:
-        print("word :", getBasic(doc[i]))
+        # print("word :", getBasic(doc[i]))
         words.append(getBasic(doc[i]))
 
 lex = open(x, "w")
