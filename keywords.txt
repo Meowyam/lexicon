@@ -1,0 +1,23 @@
+DECLARE Agreement
+
+DECLARE Role IS Borrower PLUS Lender
+
+DECLARE Party
+HAS role IS A Role
+HAS bankBalance IS A Int
+
+DECLARE Loan IS A Agreement
+HAS Parties IS A MAP FROM Role TO Party
+HAS PrincipalAmt IS A Nat
+
+DEFINE B IS A Party
+HAS Role.Borrower IS THE role
+HAS 100 IS THE bankBalance
+
+DEFINE L IS A Party
+HAS Role.Lender IS THE role
+HAS 0 IS THE bankBalance
+
+DEFINE SimpleLoan IS A Loan
+HAS #[(Role.Borrower, B), (Role.Lender, L)] IS THE Parties
+HAS 1000 IS THE PrincipalAmt
