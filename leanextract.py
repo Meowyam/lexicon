@@ -9,9 +9,9 @@ f = open(x,"r")
 lines = f.readlines()
 
 def combineIS(arr):
-  i = 0
+    i = 0
     while i < len(arr) - 1:
-      if arr[i] == "IS" and arr[i+1].isupper():
+        if arr[i] == "IS" and arr[i+1].isupper():
           fixed_arr = arr[i] + " " + arr[i + 1]
           arr[i] = fixed_arr
           del arr[i + 1]
@@ -48,4 +48,5 @@ with open("LeanSyntax.gf", 'w') as abs:
       abs.write('  ' + fun + '; \n')
 
     abs.write('\n\n}')
+
 
