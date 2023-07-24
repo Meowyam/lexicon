@@ -76,11 +76,26 @@ tok = enumerate(doc)
 def checkSubChild(dep, ls):
     return any(child[2] == dep for child in ls)
 
+def checkSubChildTwo(dep1, dep2, ls):
+    return all(any(child[2] == dep for child in ls) for dep in [dep1, dep2])
+
 def checkWhichVerb(t):
     childList = [[child.lemma_, child.pos_, child.dep_] for child in t.children]
-    print(t.lemma_, childList)
+    # print(t.lemma_, childList)
     # dobj is obj in the spacy-udpipe
-    if checkSubChild("obj", childList):
+    if checkSubChildTwo("xcomp", "obj", childList):
+        print(t.lemma_, childList)
+        for child in childList:
+            if child[1] == "ADJ" and child[2] == "xcomp":
+                word = t.lemma_ + "_V2A = " + "mkV2A" + ' (mkV "' + t.lemma_ + '")'
+                words.append(word)
+            elif child[1] == "VERB" and child[2] == "xcomp":
+                word = t.lemma_ + "_V2V = " + "mkV2V" + ' (mkV "' + t.lemma_ + '")'
+                words.append(word)
+    elif checkSubChildTwo("ccomp", "obj", childList):
+        word = t.lemma_ + "_V2S = " + "mkV2S" + ' (mkV "' + t.lemma_ + '")'
+        words.append(word)
+    elif checkSubChild("obj", childList):
         if checkSubChild("iobj", childList):
             words.append(getVerb(t, "V3"))
         else:
@@ -90,10 +105,10 @@ def checkWhichVerb(t):
     elif checkSubChild("xcomp", childList):
         for child in childList:
             if child[1] == "ADJ":
-                word = child[0] + "_VA = " + "mkVA" + ' (mkV "' + child[0] + '")'
+                word = t.lemma_ + "_VA = " + "mkVA" + ' (mkV "' + t.lemma_ + '")'
                 words.append(word)
             elif child[1] == "VERB":
-                word = child[0] + "_VV = " + "mkVV" + ' (mkV "' + child[0] + '")'
+                word = t.lemma_ + "_VV = " + "mkVV" + ' (mkV "' + t.lemma_ + '")'
                 words.append(word)
     elif checkSubChild("ccomp", childList):
         words.append(getVerb(t, "VS"))
@@ -105,7 +120,7 @@ def hasChild(t):
 
 
 for i, t in tok:
-    print(t, " :", t.lemma_, t.pos_, t.morph, t.dep_, t.head, hasChild(t))
+    print(t, " :", t.lemma_, t.pos_, t.morph, t.dep_, t.head, hasChild(t), [[child.lemma_, child.pos_, child.dep_] for child in t.children])
     if t.dep_ == "compound":
         if doc[i + 1].lemma_ == " ":
             words.append(getBasic(doc[i]))
@@ -114,11 +129,11 @@ for i, t in tok:
         else:
             words.append(getCmpnd(doc[i], doc[i + 1]))
         next(tok)
+    elif t.pos_ == "VERB" and hasChild(t):
+        checkWhichVerb(t)
     elif t.lemma_ == "-" and t.pos_ == "ADJ":
         words.append(getHyph(doc[i - 1], doc[i], doc[i + 1]))
         next(tok)
-    elif t.pos_ == "VERB" and hasChild(t):
-        checkWhichVerb(t)
     elif t.pos_ == "PART":
         if t.dep_ == "neg" or t.dep_ == "pos":
             pass
