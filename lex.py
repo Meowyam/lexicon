@@ -4,20 +4,23 @@ import re
 import itertools
 import functools
 import sys
+# no xcomp in spacy, so it's easier doing it like this
+import spacy_udpipe
 
+spacy_udpipe.download("en")
 
 x = sys.argv[1]
 file = x + ".md"
 
 with open(file) as f:
     t = f.read()
-    print(t)
+    # print(t)
 
 txt = " ".join(filter(None, t.replace("//", "").replace("/n", "").split(",")))
 
-print(txt)
+# print(txt)
 
-nlp = spacy.load("en_core_web_sm")
+nlp = spacy_udpipe.load("en")
 doc = nlp(txt)
 
 words = []
@@ -49,10 +52,12 @@ posDict = {
 def getBasic(t):
     lem = t.lemma_
     pos = posDict[t.pos_]
-    print("hey",lem, pos)
     word = lem + "_" + pos + " = " + "mk" + pos + ' "' + lem + '"'
     return word
 
+def getVerb(t, v):
+    word = t.lemma_ + "_" + v + " = " + "mk" + v + ' (mkV "' + t.lemma_ + '")'
+    return word
 
 def getCmpnd(t1, t2):
     lem = t1.lemma_ + "_" + t2.lemma_
@@ -68,8 +73,32 @@ def getHyph(t0, t1, t2):
 
 tok = enumerate(doc)
 
+def checkWhichVerb(t):
+    childList = [child.dep_ for child in t.children]
+    # dobj is obj in the spacy-udpipe
+    if 'xcomp' in childList:
+        words.append(getVerb(t, "VV"))
+    elif 'ccomp' in childList:
+        words.append(getVerb(t, "VS"))
+    elif 'obj' in childList:
+        if 'iobj' in childList:
+            words.append(getVerb(t, "V2"))
+        else:
+            words.append(getVerb(t, "V3"))
+
+    else:
+        getBasic(t)
+
+def hasChild(t):
+    return any(True for _ in t.children)
+
+    # if token.pos_ == 'VERB' and token.dep_ == 'xcomp' and 'mark' in [child.dep_ for child in token.children]:
+    #     vpc = token.text + ' ' + [child.text for child in token.children if child.dep_ == 'mark'][0] + ' ' + [child.text for child in token.children if child.dep_ == 'xcomp'][0]
+    #     vpcs.append(vpc)
+
+
 for i, t in tok:
-    print(t, " :", t.lemma_, t.pos_, t.morph, t.dep_)
+    print(t, " :", t.lemma_, t.pos_, t.morph, t.dep_, t.head, hasChild(t))
     if t.dep_ == "compound":
         if doc[i + 1].lemma_ == " ":
             words.append(getBasic(doc[i]))
@@ -81,6 +110,8 @@ for i, t in tok:
     elif t.lemma_ == "-" and t.pos_ == "ADJ":
         words.append(getHyph(doc[i - 1], doc[i], doc[i + 1]))
         next(tok)
+    elif t.pos_ == "VERB" and hasChild(t):
+        checkWhichVerb(t)
     elif t.pos_ == "PART":
         if t.dep_ == "neg" or t.dep_ == "pos":
             pass
