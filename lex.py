@@ -73,28 +73,35 @@ def getHyph(t0, t1, t2):
 
 tok = enumerate(doc)
 
-def checkWhichVerb(t):
-    childList = [child.dep_ for child in t.children]
-    # dobj is obj in the spacy-udpipe
-    if 'xcomp' in childList:
-        words.append(getVerb(t, "VV"))
-    elif 'ccomp' in childList:
-        words.append(getVerb(t, "VS"))
-    elif 'obj' in childList:
-        if 'iobj' in childList:
-            words.append(getVerb(t, "V2"))
-        else:
-            words.append(getVerb(t, "V3"))
+def checkSubChild(dep, ls):
+    return any(child[2] == dep for child in ls)
 
+def checkWhichVerb(t):
+    childList = [[child.lemma_, child.pos_, child.dep_] for child in t.children]
+    print(t.lemma_, childList)
+    # dobj is obj in the spacy-udpipe
+    if checkSubChild("obj", childList):
+        if checkSubChild("iobj", childList):
+            words.append(getVerb(t, "V3"))
+        else:
+            words.append(getVerb(t, "V2"))
+    # also for adjectival complement
+    # https://universaldependencies.org/fi/dep/xcomp.html
+    elif checkSubChild("xcomp", childList):
+        for child in childList:
+            if child[1] == "ADJ":
+                word = child[0] + "_VA = " + "mkVA" + ' (mkV "' + child[0] + '")'
+                words.append(word)
+            elif child[1] == "VERB":
+                word = child[0] + "_VV = " + "mkVV" + ' (mkV "' + child[0] + '")'
+                words.append(word)
+    elif checkSubChild("ccomp", childList):
+        words.append(getVerb(t, "VS"))
     else:
         getBasic(t)
 
 def hasChild(t):
     return any(True for _ in t.children)
-
-    # if token.pos_ == 'VERB' and token.dep_ == 'xcomp' and 'mark' in [child.dep_ for child in token.children]:
-    #     vpc = token.text + ' ' + [child.text for child in token.children if child.dep_ == 'mark'][0] + ' ' + [child.text for child in token.children if child.dep_ == 'xcomp'][0]
-    #     vpcs.append(vpc)
 
 
 for i, t in tok:
